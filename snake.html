@@ -1,0 +1,227 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+</head>
+
+
+<body>
+  <div style = "text-align:center;">
+       <canvas id="gameCanvas" width="600" height="600"></canvas>
+    </div>
+
+
+    <script>
+        var canvas;
+        var canvasContext;
+
+        //Node size
+        const NODE_WIDTH = 24;
+        const NODE_HEIGTH = 24;
+
+        //Position for the target node
+        var nodeX;
+        var nodeY;
+
+        //Player variables
+        var playerX = 0;
+        var playerY = 0;
+        var speed = 25;
+
+        //Tail length and arrays to save their positions
+        var numberOfNodes = 4;
+        var coordsX = [];
+        var coordsY = [];
+
+        //Directional bools
+        var moveUp = false;
+        var moveDown = false;
+        var moveRigth = true;
+        var moveLeft = false;
+
+        var gameOverScreen = false;
+
+        //Main function. Starts on load window
+        window.onload = function () {
+            canvas = document.getElementById('gameCanvas');
+            canvasContext = canvas.getContext('2d');
+
+            //Selects the node's position
+            generateNode();
+
+            //This section of code controls the movement and the drawing
+            var framesPerSecond = 25;
+            setInterval(function () {
+                moveEverything();
+                drawEverything();
+            }, 2500 / framesPerSecond);
+
+            document.addEventListener('keydown', function (event) {
+
+                if (!moveDown) {
+                    if (event.code == "ArrowUp") {
+                        moveUp = true;
+                        moveDown = false;
+                        moveRigth = false;
+                        moveLeft = false;
+                    }
+                }
+
+                if (!moveUp) {
+                    if (event.code == "ArrowDown") {
+                        moveUp = false;
+                        moveDown = true;
+                        moveRigth = false;
+                        moveLeft = false;
+                    }
+                }
+
+                if (!moveRigth) {
+                    if (event.code == "ArrowLeft") {
+                        moveUp = false;
+                        moveDown = false;
+                        moveRigth = false;
+                        moveLeft = true;
+                    }
+                }
+
+                if (!moveLeft) {
+                    if (event.code == "ArrowRight") {
+                        moveUp = false;
+                        moveDown = false;
+                        moveRigth = true;
+                        moveLeft = false;
+                    }
+                }
+
+                if (gameOverScreen) {
+                    resetGame();
+                }
+            });
+        }
+
+        //Resets all values to initial values
+        function resetGame() {
+            gameOverScreen = false;
+            generateNode();
+            playerX = 0;
+            playerY = 0;
+            numberOfNodes = 5;
+            coordsX = [];
+            coordsY = [];
+        }
+
+
+        function moveEverything() {
+            //Stop the game
+            if (gameOverScreen) {
+                return;
+            }else{
+                if (moveRigth) {
+                    playerX += speed;
+                }
+                if (moveLeft) {
+                    playerX -= speed;
+                }
+                if (moveUp) {
+                    playerY -= speed;
+                }
+                if (moveDown) {
+                    playerY += speed;
+                }
+
+                if (playerX + 25 > canvas.width) {
+                    playerX = 0;
+                }
+                if (playerX < 0) {
+                    playerX = canvas.width - 25;
+                }
+
+                if (playerY + 25 > canvas.height) {
+                    playerY = 0;
+                }
+                if (playerY < 0) {
+                    playerY = canvas.height - 25;
+                }
+            }
+
+
+        }
+
+
+        function drawEverything() {
+            //Background
+            colorRect(0, 0, canvas.width, canvas.height, 'black');
+
+            //Player
+            if (!gameOverScreen) {
+                coordsX.unshift(playerX);
+                coordsY.unshift(playerY);
+            }
+
+            if (coordsX.length > numberOfNodes && !gameOverScreen) {
+                coordsX.pop();
+                coordsY.pop();
+            }
+            //System of tail length
+            for (var i = 0; i < coordsX.length; i++) {
+                colorRect(coordsX[i], coordsY[i], NODE_WIDTH, NODE_HEIGTH, 'white');
+            }
+
+            //Collision detector
+            for (var i = 1; i < coordsX.length; i++) {
+                if (coordsX[i] == coordsX[0] && coordsY[i] == coordsY[0]) {
+                    gameOverScreen = true;
+                    canvasContext.fillStyle = "white";
+                    canvasContext.fillText("Game Over", canvas.width/2, canvas.height/2);
+                }
+            }
+
+            //Node
+            if (playerX == nodeX && playerY == nodeY) {
+                colorRect(nodeX + 500, nodeY, NODE_WIDTH, NODE_HEIGTH, 'black');
+                generateNode();
+
+            } else {
+                colorRect(nodeX, nodeY, NODE_WIDTH, NODE_HEIGTH, 'white');
+            }
+
+
+        }
+
+        //Random node generator based on the game grid
+        function generateNode() {
+            var randomNumber1 = Math.floor(Math.random() * (canvas.width / 25));
+            var randomNumber2 = Math.floor(Math.random() * (canvas.width / 25));
+            nodeX = this.selectPositionNode(randomNumber1);
+            nodeY = this.selectPositionNode(randomNumber2);
+            numberOfNodes++;
+        }
+
+        //Returns the value from the arrayPoints in the canvas
+        function selectPositionNode(position) {
+            var arrayPoints = fillArray();
+
+            return arrayPoints[position];
+        }
+
+        function fillArray() {
+            var arrayPoints = [];
+            var points = 0;
+            for (var i = 0; i < (canvas.width / 25); i++) {
+                arrayPoints[i] = points;
+                points += 25;
+            }
+
+            return arrayPoints;
+        }
+
+        function colorRect(leftX, topY, witdh, height, drawColor) {
+            canvasContext.fillStyle = drawColor;
+            canvasContext.fillRect(leftX, topY, witdh, height);
+        }
+    </script>
+</body>
+</html>
